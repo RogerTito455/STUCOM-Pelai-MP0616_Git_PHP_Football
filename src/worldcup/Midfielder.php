@@ -6,23 +6,23 @@ namespace WorldCup;
  * Class to define the midfielder
  */
 class Midfielder extends Player {
-    private $vision;
+    private bool $vision;
 
     /**
      * Get the vision
      */
-    public function isVision() {
+    public function isVision(): bool {
         return $this->vision;
     }
 
     /**
      * Set the vision
      */
-    public function setVision($vision) {
+    public function setVision(bool $vision): void {
         $this->vision = $vision;
     }
 
     public function organize() {
-        ech0 "organizing\n"; // En PHP no existe print1n, así que uso echo para que funcione.
+        echo "organizing\n";
     }
 }
