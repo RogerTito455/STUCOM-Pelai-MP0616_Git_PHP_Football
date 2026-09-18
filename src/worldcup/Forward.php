@@ -6,7 +6,7 @@ namespace WorldCup;
  * Class to define the forward
  */
 class Forward extends Player {
-    public $killer; 
+    private bool $killer = false;
 
     public function drible() {
         echo "dribbling\n";
@@ -15,14 +15,14 @@ class Forward extends Player {
     /**
      * Get the killer
      */
-    public function isKiller() {
+    public function isKiller(): bool {
         return $this->killer;
     }
 
     /**
-     * Set the mark
+     * Set the killer
      */
-    public function setKiller($killer) {
+    public function setKiller(bool $killer): void {
         $this->killer = $killer;
     }
 
