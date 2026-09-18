@@ -1,0 +1,99 @@
+name: CI
+
+# Flow: issue branch -> staging -> main
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  branch-policy:
+    name: Branch policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only staging can be merged into main
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [ "$EVENT" != "pull_request" ] || [ "$BASE" != "main" ]; then
+            echo "Not a pull request into main, nothing to check."
+            exit 0
+          fi
+          if [ "$HEAD" != "staging" ] || [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo "::error::Pull requests into main must come from staging (got '$HEAD_REPO:$HEAD'). Open the PR against staging instead."
+            exit 1
+          fi
+          echo "staging -> main, OK."
+
+  php-lint:
+    name: PHP lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Select files to lint
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          # PRs into staging only lint the files they touch, so pending bugs in
+          # other files do not block unrelated issues. Everything that targets
+          # main (and every push) is linted completely.
+          if [ "$EVENT" = "pull_request" ] && [ "$BASE" = "staging" ]; then
+            git diff --name-only --diff-filter=ACMR "origin/$BASE...HEAD" -- '*.php' > files.txt
+          else
+            git ls-files -- '*.php' > files.txt
+          fi
+          echo "Files to lint:"
+          cat files.txt
+
+      - name: php -l
+        run: |
+          failed=0
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            if ! output=$(php -l "$file" 2>&1); then
+              failed=1
+              echo "$output"
+              line=$(echo "$output" | grep -oE 'on line [0-9]+' | head -n 1 | grep -oE '[0-9]+' || true)
+              message=$(echo "$output" | grep -m 1 -E 'error' || true)
+              echo "::error file=$file,line=${line:-1}::$message"
+            fi
+          done < files.txt
+          if [ "$failed" -ne 0 ]; then
+            echo "PHP syntax errors found."
+            exit 1
+          fi
+          echo "No syntax errors."
+
+  conflict-markers:
+    name: Conflict markers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Look for leftover merge conflict markers
+        run: |
+          if git grep -nE '^(<{7}|>{7})( |$)' -- . ':!.github/workflows'; then
+            echo "::error::Unresolved merge conflict markers found."
+            exit 1
+          fi
+          echo "No conflict markers."
