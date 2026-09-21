@@ -1,5 +1,7 @@
 <?php
 
+namespace WorldCup;
+
 class Person {
     private ?int $age = null;
 
