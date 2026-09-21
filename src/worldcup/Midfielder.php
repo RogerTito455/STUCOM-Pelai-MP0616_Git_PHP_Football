@@ -23,6 +23,6 @@ class Midfielder extends Player {
     }
 
     public function organize() {
-        echo "organizing\n";
-    }
+            echo "Organizando tactica por A\n";
+        }
 }
