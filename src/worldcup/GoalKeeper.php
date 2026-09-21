@@ -6,19 +6,19 @@ namespace WorldCup;
  * Class to define the goalkeeper
  */
 class Goalkeeper extends Player {
-    public $globes; // property declared without type, like in original
+    private bool $globes = false;
 
     /**
      * Get the globes
      */
-    public function isGlobes() {
+    public function isGlobes(): bool {
         return $this->globes;
     }
 
     /**
      * Set the globes
      */
-    public function setGlobes($globes) {
+    public function setGlobes(bool $globes): void {
         $this->globes = $globes;
     }
 
