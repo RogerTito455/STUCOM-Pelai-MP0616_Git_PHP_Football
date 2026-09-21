@@ -23,6 +23,6 @@ class Player extends Person {
     }
 
     public function passBall(): void {
-        echo "passing the ball to someone else\n";
+        echo "passing the ball to myself\n";
     }
 }
