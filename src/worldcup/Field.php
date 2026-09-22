@@ -3,6 +3,7 @@
 namespace WorldCup;
 
 class Field {
+    private int $size;
 
     public function __construct($size) {
         $this->size = $size;
